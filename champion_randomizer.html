@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рандомайзер чемпионов LoL</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e17 0%, #1a1f2e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #f0e6d2;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #c89b3c 0%, #f0e6d2 50%, #c89b3c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            color: #5b5a56;
+            font-size: 1rem;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        /* Палетка чемпионов */
+        .palette-section {
+            background: linear-gradient(145deg, #1e2328 0%, #0d1117 100%);
+            border: 2px solid #c89b3c;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .palette-title {
+            color: #c89b3c;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .palette-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            background: rgba(200, 155, 60, 0.1);
+            border: 1px solid #c89b3c;
+            color: #c89b3c;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            background: rgba(200, 155, 60, 0.2);
+        }
+
+        .filter-btn.active {
+            background: #c89b3c;
+            color: #0a0e17;
+            font-weight: bold;
+        }
+
+        .search-input {
+            background: rgba(10, 14, 23, 0.8);
+            border: 1px solid #5b5a56;
+            color: #f0e6d2;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #c89b3c;
+        }
+
+        .search-input::placeholder {
+            color: #5b5a56;
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .palette-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .palette-grid::-webkit-scrollbar-track {
+            background: #0d1117;
+            border-radius: 4px;
+        }
+
+        .palette-grid::-webkit-scrollbar-thumb {
+            background: #c89b3c;
+            border-radius: 4px;
+        }
+
+        .palette-champ {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            border: 3px solid #3c3c41;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+
+        .palette-champ:hover {
+            border-color: #c89b3c;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(200, 155, 60, 0.4);
+            filter: brightness(1);
+        }
+
+        .palette-champ.selected {
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.4);
+            filter: brightness(1.2);
+            transform: scale(1.05);
+        }
+
+        .selected-count {
+            margin-top: 15px;
+            color: #a09b8c;
+            font-size: 1rem;
+        }
+
+        .selected-count span {
+            color: #c89b3c;
+            font-weight: bold;
+        }
+
+        /* Зона рандома */
+        .random-section {
+            background: linear-gradient(145deg, #1e2328 0%, #0d1117 100%);
+            border: 2px solid #c89b3c;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .champion-result {
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .champion-image {
+            width: 250px;
+            height: 250px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 3px solid #c89b3c;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            margin-bottom: 20px;
+        }
+
+        .champion-name {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #f0e6d2;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .champion-role-tag {
+            background: rgba(200, 155, 60, 0.2);
+            color: #c89b3c;
+            padding: 5px 15px;
+            border-radius: 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .placeholder-text {
+            color: #5b5a56;
+            font-size: 1.3rem;
+            font-style: italic;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 15px 35px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-random {
+            background: linear-gradient(135deg, #c89b3c 0%, #785a28 100%);
+            color: #0a0e17;
+            box-shadow: 0 5px 20px rgba(200, 155, 60, 0.3);
+        }
+
+        .btn-random:hover:not(:disabled) {
+            background: linear-gradient(135deg, #f0e6d2 0%, #c89b3c 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(200, 155, 60, 0.5);
+        }
+
+        .btn-random:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #e84c3d 0%, #c0392b 100%);
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(232, 76, 61, 0.3);
+        }
+
+        .btn-reset:hover {
+            background: linear-gradient(135deg, #ff6b6b 0%, #e84c3d 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(232, 76, 61, 0.5);
+        }
+
+        /* История */
+        .history-section {
+            background: linear-gradient(145deg, #1e2328 0%, #0d1117 100%);
+            border: 2px solid #3c3c41;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .history-title {
+            color: #5b5a56;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .history-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(200, 155, 60, 0.1);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .history-item img {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Рулетка */
+        .roulette-window {
+            width: 300px;
+            height: 150px;
+            overflow: hidden;
+            border: 3px solid #c89b3c;
+            border-radius: 15px;
+            position: relative;
+            background: rgba(10, 14, 23, 0.9);
+            margin-bottom: 20px;
+            box-shadow: 0 0 30px rgba(200, 155, 60, 0.3);
+        }
+
+        .roulette-strip {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            width: 100%;
+            transition: none;
+        }
+
+        .roulette-item {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px;
+            flex-shrink: 0;
+        }
+
+        .roulette-item img {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            border: 2px solid #c89b3c;
+            object-fit: cover;
+        }
+
+        .roulette-item span {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f0e6d2;
+            text-transform: uppercase;
+        }
+
+        .roulette-indicator {
+            width: 300px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #ffd700, transparent);
+            margin-top: -77px;
+            margin-bottom: 20px;
+            border-radius: 2px;
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        @keyframes winnerPulse {
+            0%, 100% { box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4); }
+            50% { box-shadow: 0 5px 40px rgba(255, 215, 0, 0.6); }
+        }
+
+        .champion-image.winner {
+            animation: winnerPulse 1.5s ease-in-out infinite;
+            border-color: #ffd700;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .palette-grid {
+                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            }
+
+            .palette-champ {
+                width: 60px;
+                height: 60px;
+            }
+
+            .btn {
+                padding: 12px 25px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Рандомайзер чемпионов</h1>
+        <p class="subtitle">League of Legends</p>
+
+        <!-- Палетка для выбора -->
+        <div class="palette-section">
+            <h2 class="palette-title">🎨 Выбери чемпионов для рандома</h2>
+            
+            <input type="text" id="search-input" class="search-input" placeholder="🔍 Поиск чемпиона...">
+            
+            <div class="palette-filters" id="palette-filters">
+                <button class="filter-btn active" data-role="all">Все</button>
+                <button class="filter-btn" data-role="Fighter">Бойцы</button>
+                <button class="filter-btn" data-role="Mage">Маги</button>
+                <button class="filter-btn" data-role="Assassin">Убийцы</button>
+                <button class="filter-btn" data-role="Tank">Танки</button>
+                <button class="filter-btn" data-role="Support">Поддержка</button>
+                <button class="filter-btn" data-role="Marksman">Стрелки</button>
+            </div>
+
+            <div class="palette-grid" id="palette-grid"></div>
+            
+            <p class="selected-count">Выбрано: <span id="selected-count">0</span> чемпионов</p>
+        </div>
+
+        <!-- Результат рандома -->
+        <div class="random-section">
+            <div class="champion-result" id="champion-result">
+                <div id="placeholder" class="placeholder-text">
+                    Выбери чемпионов и нажми кнопку!
+                </div>
+                
+                <!-- Рулетка -->
+                <div id="roulette-container" style="display: none;">
+                    <div class="roulette-window">
+                        <div class="roulette-strip" id="roulette-strip"></div>
+                    </div>
+                    <div class="roulette-indicator"></div>
+                </div>
+                
+                <img id="champion-img" class="champion-image" style="display: none;" alt="Чемпион">
+                <h2 id="champion-name" class="champion-name" style="display: none;"></h2>
+                <p id="champion-role" class="champion-role-tag" style="display: none;"></p>
+            </div>
+
+            <div class="buttons">
+                <button class="btn btn-random" id="random-btn" disabled>🎯 Рандом!</button>
+                <button class="btn btn-reset" id="reset-btn">🔄 Сбросить</button>
+                <button class="btn btn-reset" id="restart-btn" style="display: none;">🔁 Начать заново</button>
+            </div>
+
+            <!-- История -->
+            <div class="history-section" id="history-section" style="display: none;">
+                <h3 class="history-title">📋 История</h3>
+                <div class="history-list" id="history-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PATCH_VERSION = '16.7.1';
+        const CDN_URL = `https://ddragon.leagueoflegends.com/cdn/${PATCH_VERSION}`;
+        
+        let allChampions = [];
+        let selectedChampions = new Set();
+        let availableForRandom = [];
+        let history = [];
+        let currentFilter = 'all';
+        let searchQuery = '';
+        let isSpinning = false;
+
+        // Загрузка списка чемпионов
+        async function loadChampions() {
+            try {
+                const response = await fetch(`${CDN_URL}/data/ru_RU/champion.json`);
+                const data = await response.json();
+                
+                allChampions = Object.values(data.data).map(champ => ({
+                    id: champ.id,
+                    name: champ.name,
+                    tags: champ.tags
+                }));
+
+                renderPalette();
+                updateButtons();
+            } catch (error) {
+                console.error('Ошибка загрузки чемпионов:', error);
+            }
+        }
+
+        // Получить роль чемпиона
+        function getMainRole(champion) {
+            return champion.tags[0] || 'Fighter';
+        }
+
+        function getRoleName(tag) {
+            const roles = {
+                'Fighter': 'Боец',
+                'Tank': 'Танк',
+                'Mage': 'Маг',
+                'Assassin': 'Убийца',
+                'Support': 'Поддержка',
+                'Marksman': 'Стрелок'
+            };
+            return roles[tag] || tag;
+        }
+
+        // Отрисовка палетки
+        function renderPalette() {
+            const grid = document.getElementById('palette-grid');
+            grid.innerHTML = '';
+
+            const filtered = allChampions.filter(champ => {
+                const matchesRole = currentFilter === 'all' || 
+                    (champ.tags && champ.tags.includes(currentFilter));
+                const matchesSearch = champ.name.toLowerCase()
+                    .includes(searchQuery.toLowerCase());
+                return matchesRole && matchesSearch;
+            });
+
+            filtered.forEach(champ => {
+                const img = document.createElement('img');
+                img.className = 'palette-champ';
+                if (selectedChampions.has(champ.id)) {
+                    img.classList.add('selected');
+                }
+                img.src = `${CDN_URL}/img/champion/${champ.id}.png`;
+                img.alt = champ.name;
+                img.title = champ.name;
+                
+                img.addEventListener('click', () => toggleChampion(champ.id));
+                
+                grid.appendChild(img);
+            });
+        }
+
+        // Выбрать/убрать чемпиона
+        function toggleChampion(id) {
+            if (selectedChampions.has(id)) {
+                selectedChampions.delete(id);
+            } else {
+                selectedChampions.add(id);
+            }
+            
+            renderPalette();
+            resetRandom();
+            updateButtons();
+        }
+
+        // Обновить состояние кнопок
+        function updateButtons() {
+            const count = selectedChampions.size;
+            document.getElementById('selected-count').textContent = count;
+            
+            const randomBtn = document.getElementById('random-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            
+            // Показать кнопку "Начать заново" если чемпионы закончились
+            if (availableForRandom.length === 0 && count > 0 && history.length > 0) {
+                restartBtn.style.display = 'inline-block';
+                randomBtn.disabled = true;
+                randomBtn.textContent = '✅ Все выбраны!';
+            } else if (availableForRandom.length > 0) {
+                restartBtn.style.display = 'none';
+                randomBtn.disabled = false;
+                randomBtn.textContent = `🎯 Рандом! (${availableForRandom.length})`;
+            } else if (count > 0) {
+                restartBtn.style.display = 'none';
+                randomBtn.disabled = false;
+                randomBtn.textContent = `🎯 Рандом! (${count})`;
+            } else {
+                restartBtn.style.display = 'none';
+                randomBtn.disabled = true;
+                randomBtn.textContent = '🎯 Рандом!';
+            }
+        }
+
+        // Фильтры по ролям
+        document.getElementById('palette-filters').addEventListener('click', (e) => {
+            if (e.target.classList.contains('filter-btn')) {
+                document.querySelectorAll('.filter-btn').forEach(btn => 
+                    btn.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.role;
+                renderPalette();
+            }
+        });
+
+        // Поиск
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderPalette();
+        });
+
+        // Рандомный выбор
+        function getRandomChampion() {
+            if (availableForRandom.length === 0) {
+                availableForRandom = [...selectedChampions];
+            }
+            
+            if (availableForRandom.length === 0) return null;
+            
+            const randomIndex = Math.floor(Math.random() * availableForRandom.length);
+            const championId = availableForRandom.splice(randomIndex, 1)[0];
+            
+            return allChampions.find(c => c.id === championId);
+        }
+
+        // Запустить рулетку
+        async function startRoulette(winnerChampion) {
+            isSpinning = true;
+            document.getElementById('random-btn').disabled = true;
+            
+            const placeholder = document.getElementById('placeholder');
+            const rouletteContainer = document.getElementById('roulette-container');
+            const strip = document.getElementById('roulette-strip');
+            
+            placeholder.style.display = 'none';
+            rouletteContainer.style.display = 'block';
+            document.getElementById('champion-img').style.display = 'none';
+            document.getElementById('champion-name').style.display = 'none';
+            document.getElementById('champion-role').style.display = 'none';
+            
+            // Создать элементы рулетки
+            strip.innerHTML = '';
+            const itemCount = 30; // Количество элементов в рулетке
+            const winnerIndex = 25; // Индекс победителя (ближе к концу для долгой прокрутки)
+            
+            for (let i = 0; i < itemCount; i++) {
+                const champ = allChampions[Math.floor(Math.random() * allChampions.length)];
+                const item = document.createElement('div');
+                item.className = 'roulette-item';
+                item.innerHTML = `
+                    <img src="${CDN_URL}/img/champion/${champ.id}.png" alt="${champ.name}">
+                    <span>${champ.name}</span>
+                `;
+                strip.appendChild(item);
+                
+                // Заменить элемент на победителя
+                if (i === winnerIndex) {
+                    item.innerHTML = `
+                        <img src="${CDN_URL}/img/champion/${winnerChampion.id}.png" alt="${winnerChampion.name}">
+                        <span>${winnerChampion.name}</span>
+                    `;
+                }
+            }
+            
+            // Начальная позиция
+            strip.style.transform = 'translateY(0)';
+            strip.style.transition = 'none';
+            
+            // Небольшая задержка перед анимацией
+            await sleep(100);
+            
+            // Вычислить конечную позицию (чтобы победитель был в центре)
+            const itemHeight = 150;
+            const windowHeight = 150;
+            const targetY = -(winnerIndex * itemHeight) + (windowHeight / 2) - (itemHeight / 2);
+            
+            // Анимация с easing (замедление к концу)
+            strip.style.transition = 'transform 3s cubic-bezier(0.15, 0.85, 0.35, 1.0)';
+            strip.style.transform = `translateY(${targetY}px)`;
+            
+            // Ждать окончания анимации
+            await sleep(3100);
+            
+            // Показать победителя
+            showWinner(winnerChampion);
+            isSpinning = false;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Показать победителя
+        function showWinner(champion) {
+            const rouletteContainer = document.getElementById('roulette-container');
+            const img = document.getElementById('champion-img');
+            const name = document.getElementById('champion-name');
+            const role = document.getElementById('champion-role');
+            
+            rouletteContainer.style.display = 'none';
+            
+            img.style.display = 'block';
+            img.classList.add('fade-in', 'winner');
+            img.src = `${CDN_URL}/img/champion/${champion.id}.png`;
+            img.alt = champion.name;
+            
+            name.textContent = champion.name;
+            name.style.display = 'block';
+            name.classList.add('fade-in');
+            
+            const mainRole = getMainRole(champion);
+            role.textContent = getRoleName(mainRole);
+            role.style.display = 'block';
+            role.classList.add('fade-in');
+            
+            // Добавить в историю
+            history.push(champion);
+            renderHistory();
+            updateButtons();
+        }
+
+        // Сбросить рандом
+        function resetRandom() {
+            if (isSpinning) return;
+            
+            availableForRandom = [...selectedChampions];
+            history = [];
+            
+            document.getElementById('history-section').style.display = 'none';
+            document.getElementById('history-list').innerHTML = '';
+            document.getElementById('restart-btn').style.display = 'none';
+            
+            document.getElementById('placeholder').style.display = 'block';
+            document.getElementById('champion-img').style.display = 'none';
+            document.getElementById('champion-name').style.display = 'none';
+            document.getElementById('champion-role').style.display = 'none';
+            document.getElementById('roulette-container').style.display = 'none';
+            
+            updateButtons();
+        }
+
+        // Показать победителя
+        function showWinner(champion) {
+            const rouletteContainer = document.getElementById('roulette-container');
+            const img = document.getElementById('champion-img');
+            const name = document.getElementById('champion-name');
+            const role = document.getElementById('champion-role');
+            
+            rouletteContainer.style.display = 'none';
+            
+            img.style.display = 'block';
+            img.classList.add('fade-in', 'winner');
+            img.src = `${CDN_URL}/img/champion/${champion.id}.png`;
+            img.alt = champion.name;
+            
+            name.textContent = champion.name;
+            name.style.display = 'block';
+            name.classList.add('fade-in');
+            
+            const mainRole = getMainRole(champion);
+            role.textContent = getRoleName(mainRole);
+            role.style.display = 'block';
+            role.classList.add('fade-in');
+            
+            // Добавить в историю
+            history.push(champion);
+            renderHistory();
+            updateButtons();
+        }
+
+        // Отрисовка истории
+        function renderHistory() {
+            const section = document.getElementById('history-section');
+            const list = document.getElementById('history-list');
+            
+            section.style.display = 'block';
+            list.innerHTML = '';
+
+            history.forEach(champ => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <img src="${CDN_URL}/img/champion/${champ.id}.png" alt="${champ.name}">
+                    <span>${champ.name}</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Обработчик кнопки рандома
+        document.getElementById('random-btn').addEventListener('click', async () => {
+            if (isSpinning) return;
+            
+            const champion = getRandomChampion();
+            
+            if (champion) {
+                await startRoulette(champion);
+            } else {
+                alert('Не выбрано ни одного чемпиона!');
+            }
+        });
+
+        // Обработчик сброса
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if (isSpinning) return;
+            selectedChampions.clear();
+            resetRandom();
+            renderPalette();
+        });
+
+        // Обработчик "Начать заново"
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            if (isSpinning) return;
+            resetRandom();
+        });
+
+        // Горячая клавиша пробел
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !e.target.matches('input')) {
+                e.preventDefault();
+                document.getElementById('random-btn').click();
+            }
+        });
+
+        // Загрузка при старте
+        loadChampions();
+    </script>
+</body>
+</html>
