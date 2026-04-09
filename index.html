@@ -174,6 +174,38 @@
             font-weight: bold;
         }
 
+        /* Палетка - действия */
+        .palette-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .btn-select-all {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            color: #0a0e17;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 15px rgba(0, 184, 148, 0.3);
+        }
+
+        .btn-select-all:hover {
+            background: linear-gradient(135deg, #55efc4 0%, #81ecec 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 184, 148, 0.5);
+        }
+
+        .btn-select-all:active {
+            transform: translateY(0);
+        }
+
         /* Зона рандома */
         .random-section {
             background: linear-gradient(145deg, #1e2328 0%, #0d1117 100%);
@@ -436,6 +468,11 @@
                 font-size: 0.8rem;
             }
 
+            .btn-select-all {
+                padding: 7px 16px;
+                font-size: 0.8rem;
+            }
+
             .palette-grid {
                 grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
                 gap: 8px;
@@ -688,6 +725,10 @@
                 <button class="filter-btn" data-role="Marksman">Стрелки</button>
             </div>
 
+            <div class="palette-actions">
+                <button class="btn-select-all" id="select-all-btn">✨ Выбрать всех</button>
+            </div>
+
             <div class="palette-grid" id="palette-grid"></div>
             
             <p class="selected-count">Выбрано: <span id="selected-count">0</span> чемпионов</p>
@@ -811,11 +852,34 @@
             } else {
                 selectedChampions.add(id);
             }
-            
+
             renderPalette();
             resetRandom();
             updateButtons();
         }
+
+        // Выбрать всех чемпионов
+        function selectAllChampions() {
+            // Добавить всех отфильтрованных чемпионов в выбранные
+            const filtered = allChampions.filter(champ => {
+                const matchesRole = currentFilter === 'all' ||
+                    (champ.tags && champ.tags.includes(currentFilter));
+                const matchesSearch = champ.name.toLowerCase()
+                    .includes(searchQuery.toLowerCase());
+                return matchesRole && matchesSearch;
+            });
+
+            filtered.forEach(champ => selectedChampions.add(champ.id));
+
+            renderPalette();
+            resetRandom();
+            updateButtons();
+        }
+
+        // Обработчик кнопки "Выбрать всех"
+        document.getElementById('select-all-btn').addEventListener('click', () => {
+            selectAllChampions();
+        });
 
         // Обновить состояние кнопок
         function updateButtons() {
